@@ -1,16 +1,28 @@
 import { inject } from '@angular/core';
-import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import { catchError, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
-/** Adds the bearer token to protected API requests. */
+/**
+ * Adds the bearer token to protected API requests and handles 401 responses.
+ * A 401 from /api/auth/* means wrong credentials, not an expired session,
+ * so those requests are left to the login/register pages.
+ */
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
-  const token = inject(AuthService).token();
+  const auth = inject(AuthService);
+  const token = auth.token();
+  const isAuthRoute = request.url.startsWith('/api/auth/');
 
-  return next(
-    token
-      ? request.clone({
-          setHeaders: { Authorization: `Bearer ${token}` },
-        })
-      : request,
+  const authorized = token && !isAuthRoute
+    ? request.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+    : request;
+
+  return next(authorized).pipe(
+    catchError((error: unknown) => {
+      if (error instanceof HttpErrorResponse && error.status === 401 && !isAuthRoute) {
+        auth.handleUnauthorized();
+      }
+      return throwError(() => error);
+    }),
   );
 };
