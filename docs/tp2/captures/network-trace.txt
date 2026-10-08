@@ -1,0 +1,27 @@
+Trace réseau enregistrée le 02/10/2026 17:09:23 via le protocole DevTools (Edge headless),
+pendant le scénario : connexion → lecture de song1 → upload (double clic) → upload refusé.
+Le token est masqué ; les corps de requête (dont le mot de passe du login) ne sont pas enregistrés.
+
+POST /api/auth/login  →  200
+    Requête : Authorization: (absent) | Content-Type: application/json
+    Réponse : Content-Type: application/json; charset=utf-8 | Content-Length: 353
+
+GET /api/tracks?page=1&limit=5  →  200
+    Requête : Authorization: Bearer *** (masqué)
+    Réponse : Content-Type: application/json; charset=utf-8 | Content-Length: 528
+
+GET /api/tracks/6aac058001a0ef81ffde61b3/audio  →  200
+    Requête : Authorization: Bearer *** (masqué)
+    Réponse : Content-Type: audio/mpeg | Content-Length: 3605337
+
+POST /api/tracks  →  201
+    Requête : Authorization: Bearer *** (masqué) | Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryljoOqIyRBXpkFX54
+    Réponse : Content-Type: application/json; charset=utf-8 | Content-Length: 205
+
+GET /api/tracks?page=1&limit=5  →  200
+    Requête : Authorization: Bearer *** (masqué)
+    Réponse : Content-Type: application/json; charset=utf-8 | Content-Length: 781
+
+POST /api/tracks  →  400
+    Requête : Authorization: Bearer *** (masqué) | Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryRcw4YcaPZrwMSgGo
+    Réponse : Content-Type: application/json; charset=utf-8 | Content-Length: 39

@@ -21,6 +21,11 @@ export class TrackService {
     return this.http.post<Track>('/api/tracks', body);
   }
 
+  /** Supprime une piste. Le backend vérifie le JWT et que la piste appartient à l'utilisateur (sinon 404). */
+  delete(id: string) {
+    return this.http.delete<void>(`/api/tracks/${id}`);
+  }
+
   audio(id: string) {
     return this.http.get(`/api/tracks/${id}/audio`, {
       responseType: 'blob',

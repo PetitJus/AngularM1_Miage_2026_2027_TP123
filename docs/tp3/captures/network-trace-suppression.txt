@@ -1,0 +1,15 @@
+Trace réseau enregistrée le 02/10/2026 17:42:30 via le protocole DevTools (Edge headless).
+Scénario : connexion → 2 pistes de test → annulation → suppression (double clic) → suppression d'une piste déjà supprimée ailleurs → DELETE sans JWT.
+Token masqué ; corps de requête non enregistrés.
+
+POST   /api/auth/login  →  200   Authorization: (absent)
+GET    /api/tracks?page=1&limit=5  →  200   Authorization: Bearer *** (masqué)
+POST   /api/tracks  →  201   Authorization: Bearer *** (masqué)
+POST   /api/tracks  →  201   Authorization: Bearer *** (masqué)
+GET    /api/tracks?page=1&limit=5  →  200   Authorization: Bearer *** (masqué)
+DELETE /api/tracks/6abfd0e0aa62a127cbdcaf83  →  204   Authorization: Bearer *** (masqué)
+GET    /api/tracks?page=1&limit=5  →  200   Authorization: Bearer *** (masqué)
+DELETE /api/tracks/6abfd0e0aa62a127cbdcaf84  →  204   Authorization: Bearer *** (masqué)   (simulation : suppression depuis un autre onglet)
+DELETE /api/tracks/6abfd0e0aa62a127cbdcaf84  →  404   Authorization: Bearer *** (masqué)
+GET    /api/tracks?page=1&limit=5  →  200   Authorization: Bearer *** (masqué)
+DELETE /api/tracks/6abfd0e0aa62a127cbdcaf83  →  401   Authorization: (absent)

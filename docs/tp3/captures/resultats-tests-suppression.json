@@ -1,0 +1,57 @@
+[
+  {
+    "label": "1. Annuler la confirmation : aucune requête DELETE",
+    "ok": true,
+    "detail": "dialogue : \"Supprimer définitivement « Test suppression A » ?\""
+  },
+  {
+    "label": "1. La piste est toujours affichée",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "label": "2. Pendant la suppression : bouton désactivé « Suppression… »",
+    "ok": true,
+    "detail": "{\"disabled\":true,\"text\":\"Suppression…\"}"
+  },
+  {
+    "label": "2. Une seule requête DELETE malgré le double clic",
+    "ok": true,
+    "detail": "DELETE /api/tracks/6abfd0e0aa62a127cbdcaf83 → 204"
+  },
+  {
+    "label": "2. SnackBar de succès",
+    "ok": true,
+    "detail": "« Test suppression A » a été supprimée. OK"
+  },
+  {
+    "label": "2. Liste rechargée sans la piste",
+    "ok": true,
+    "detail": "Test suppression B, song2, song1"
+  },
+  {
+    "label": "3. Piste B supprimée « dans un autre onglet » mais encore affichée",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "label": "3. Le backend répond 404",
+    "ok": true,
+    "detail": "DELETE /api/tracks/6abfd0e0aa62a127cbdcaf84 → 404"
+  },
+  {
+    "label": "3. SnackBar d'erreur explicite",
+    "ok": true,
+    "detail": "« Test suppression B » n'existe plus ou ne vous appartient pas. La liste a été actualisée. OK"
+  },
+  {
+    "label": "3. Liste actualisée",
+    "ok": true,
+    "detail": "song2, song1"
+  },
+  {
+    "label": "4. DELETE sans JWT → 401 (le backend protège la route)",
+    "ok": true,
+    "detail": "statut 401"
+  }
+]

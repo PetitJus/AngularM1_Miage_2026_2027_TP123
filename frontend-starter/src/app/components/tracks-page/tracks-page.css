@@ -1,1 +1,84 @@
 :host { display: block; }
+
+/* Grille responsive : autant de colonnes que la largeur le permet (une seule sur mobile). */
+.track-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.track-cards__empty { grid-column: 1 / -1; color: #61756f; }
+
+.track-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  height: 100%;
+  padding: 1rem;
+  background: #f8fbfa;
+  border: 1px solid #d5e3de;
+  border-radius: 12px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.track-card:hover,
+.track-card:focus-within {
+  border-color: #1d755e;
+  box-shadow: 0 4px 14px #17312a1f;
+}
+
+.track-card__title {
+  margin: 0;
+  font-size: 1.05rem;
+  overflow-wrap: anywhere;
+}
+
+/* Le nom complet reste lisible au survol (attribut title) et pour les lecteurs d'écran. */
+.track-card__file {
+  margin: 0;
+  overflow: hidden;
+  color: #4f625c;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.track-card__meta {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0.25rem 0 0.5rem;
+  font-size: 0.85rem;
+}
+
+.track-card__meta div { display: flex; justify-content: space-between; gap: 0.5rem; }
+.track-card__meta dt { color: #4f625c; }
+.track-card__meta dd { margin: 0; font-weight: 600; text-align: right; }
+
+.badge {
+  padding: 0.1rem 0.5rem;
+  color: #123d32;
+  background: #d9efe7;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+/* Les actions restent en bas de la card, même si les titres ont des longueurs différentes. */
+.track-card__actions { display: flex; gap: 0.5rem; margin-top: auto; }
+.track-card__play { flex: 1; }
+
+.track-card__delete {
+  color: #a33;
+  background: transparent;
+  border: 1px solid #a33;
+}
+
+.track-card__delete:hover:not(:disabled) { color: #fff; background: #a33; }
+
+button:focus-visible {
+  outline: 3px solid #e0b84c;
+  outline-offset: 2px;
+}

@@ -36,3 +36,7 @@ audio { width: 100%; }
 .success { color: #1d755e; }
 nav { align-items: center; }
 button.link { padding: 0; color: white; background: none; text-decoration: underline; font: inherit; }
+
+/* SnackBar Material (rendu hors du composant, donc styles globaux). */
+.snack-success { --mat-snack-bar-container-color: #1d755e; --mat-snack-bar-supporting-text-color: #fff; --mat-snack-bar-button-color: #fff; }
+.snack-error { --mat-snack-bar-container-color: #a33; --mat-snack-bar-supporting-text-color: #fff; --mat-snack-bar-button-color: #fff; }
