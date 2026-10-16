@@ -1,6 +1,6 @@
 # TP1 — Livrables
 
-Binôme : _à compléter_ · Date : 24/09/2026
+Travail individuel : Lorenzo Lofredi · Date : 24/09/2026
 
 Sommaire :
 

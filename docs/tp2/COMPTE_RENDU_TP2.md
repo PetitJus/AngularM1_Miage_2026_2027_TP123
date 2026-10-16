@@ -1,6 +1,6 @@
 # TP2 — Compte rendu
 
-Binôme : _à compléter_
+Travail individuel : Lorenzo Lofredi
 
 Sommaire :
 

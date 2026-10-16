@@ -1,6 +1,6 @@
 # TP3 — Compte rendu
 
-Binôme : _à compléter_
+Travail individuel : Lorenzo Lofredi
 
 Sommaire :
 
@@ -377,4 +377,4 @@ Remarque : au premier chargement, le navigateur demande `favicon.ico`, absent du
 | `npm run build` exécuté | Vérifications finales | ✅ Fait (08/10 et 16/10) |
 | Rapport IA | `RAPPORT_IA_MODELE.md`, partie TP3 | ✅ Fait ; rubriques « maitre » à compléter |
 
-**Reste à faire par le binôme** : renseigner les noms, remplir les rubriques « maitre » du rapport IA (relectures, ce que chacun sait expliquer) et s'entraîner à la restitution orale.
+**Reste à faire** : remplir les rubriques « maitre » du rapport IA (relectures, ce que je sais expliquer) et s'entraîner à la restitution orale.

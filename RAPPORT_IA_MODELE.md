@@ -86,7 +86,7 @@ Les trois captures ont été faites le 16/10/2026 par l'agent, à la demande du 
 - Front : `profile-page.html` (formulaire) → `profile-page.ts` `save()` → `auth.service.ts` `update(name)` (`PUT /api/users/me`, met à jour le Signal `currentUser`) → `auth.interceptor.ts` (ajoute `Authorization: Bearer …`).
 - Back : `backend/src/app.js`, route `app.put("/api/users/me", auth, …)` → middleware `auth` (vérifie le JWT) → `User.findByIdAndUpdate` avec `runValidators` → schéma dans `backend/src/models/User.js` (`name` requis, ≥ 2 caractères).
 
-**Ce que chaque membre sait expliquer sans l'agent** : _à confirmer par chaque membre_. Points attendus :
+**Ce que je sais expliquer sans l'agent (travail individuel)** : _à confirmer par le maitre_. Points attendus :
 - le trajet d'un clic sur « Se connecter » : composant → `AuthService.login()` → `HttpClient` → proxy → Express → MongoDB, puis `tap` qui enregistre le token ;
 - le rôle de l'intercepteur (ajouter le JWT, gérer le 401) et celui du guard (bloquer la navigation sans token) ;
 - la différence entre le Signal `currentUser` et `localStorage` ;
@@ -136,7 +136,7 @@ Les étapes 3 à 6 n'ont pas été validées une par une : elles ont été faite
 
 **Preuves** : [capture DevTools de la pagination](docs/tp2/captures/network-pagination.png), [capture de l'erreur de liste](docs/tp2/captures/liste-erreur.png), [trace réseau](docs/tp2/captures/network-trace-verification.txt).
 
-**Ce que chaque membre sait expliquer sans l'agent** : _à compléter par le maitre_.
+**Ce que je sais expliquer sans l'agent (travail individuel)** : _à compléter par le maitre_.
 
 ## Mission 3 — Analyse et amélioration de l'upload et de la lecture audio
 
@@ -332,7 +332,7 @@ Détail technique, tableaux de tests et captures : [docs/tp3/COMPTE_RENDU_TP3.md
 
 **Preuve de fonctionnement** : scénario de bout en bout dans Edge, 11 vérifications sur 11 (section 5.3) ; trace réseau `DELETE → 204`, `404` et `401` (section 5.5).
 
-**Ce que chaque membre sait expliquer sans l'agent** : _à compléter par le maitre_.
+**Ce que je sais expliquer sans l'agent (travail individuel)** : _à compléter par le maitre_.
 
 ## Missions 6 et 7 — Progression de l'upload et tests automatisés
 
@@ -409,7 +409,7 @@ Vérifications déjà effectuées par l'agent :
 - Scénario navigateur et captures : compte rendu, section 6.4.
 - Trace réseau : [docs/tp3/captures/network-trace-upload.txt](docs/tp3/captures/network-trace-upload.txt).
 
-### Ce que chaque membre sait expliquer sans l'agent
+### Ce que je sais expliquer sans l'agent (travail individuel)
 
 _À compléter par le maitre._ Les six questions de la restitution orale ont des éléments de réponse dans le compte rendu (section « Restitution orale »).
 
