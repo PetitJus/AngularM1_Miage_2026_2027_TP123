@@ -94,13 +94,19 @@ Traces correspondantes dans le terminal du backend (`npm start`) :
 
 > Les traces du backend s'affichent dans le terminal où tourne `npm start` (dossier `backend/`), et non dans le navigateur.
 
-**Captures d'écran** (DevTools → Network → filtre Fetch/XHR). Avant de faire la capture, masquez le mot de passe (onglet Payload) et le token (onglet Response).
+**Captures d'écran** (16/10/2026, compte démo) : la page de l'application en haut, l'onglet Network des DevTools d'Edge en bas, avec le filtre Fetch/XHR. Le JWT est remplacé par `<JWT masqué>` avant chaque capture. Le mot de passe n'apparaît pas, car l'onglet Payload n'est jamais ouvert.
 
-| Capture | Fichier |
-|---|---|
-| Connexion réussie (200) | [captures/network-login-200.png](captures/network-login-200.png) |
-| Connexion refusée (401) | [captures/network-login-401.png](captures/network-login-401.png) |
-| `GET` ou `PUT /api/users/me` avec `Authorization` | [captures/network-users-me.png](captures/network-users-me.png) |
+| Capture | Ce qu'elle montre | Fichier |
+|---|---|---|
+| Connexion refusée (401) | `POST /api/auth/login` → 401 ; onglet *Response* : `{"message":"Identifiants incorrects"}` ; la page affiche « Identifiants incorrects » | [captures/network-login-401.png](captures/network-login-401.png) |
+| Connexion réussie (200) | `POST /api/auth/login` → 200 ; onglet *Headers* : **pas** d'en-tête `Authorization` (route publique) ; la page a redirigé vers `/tracks` | [captures/network-login-200.png](captures/network-login-200.png) |
+| Lecture du profil | `GET /api/users/me` → 200 ; *Request headers* : `Authorization: Bearer <JWT masqué>`, ajouté par l'intercepteur | [captures/network-users-me.png](captures/network-users-me.png) |
+
+![Connexion refusée](captures/network-login-401.png)
+
+![Connexion réussie](captures/network-login-200.png)
+
+![GET /api/users/me avec Authorization](captures/network-users-me.png)
 
 ## 5. Signal ou localStorage ?
 
@@ -158,4 +164,17 @@ Traces correspondantes dans le terminal du backend (`npm start`) :
 
 ## 7. Rapport d'usage de l'IA
 
-Voir [`RAPPORT_IA_MODELE.md`](../../RAPPORT_IA_MODELE.md).
+Voir [`RAPPORT_IA_MODELE.md`](../../RAPPORT_IA_MODELE.md), partie TP1.
+
+## Bilan des livrables
+
+| Livrable demandé par le sujet | État | Où |
+|---|---|---|
+| Code frontend complété | ✅ | § 1 |
+| Schéma annoté du flux de connexion | ✅ | § 3 |
+| Capture Network d'une requête d'authentification | ✅ (3 captures) | § 4 |
+| Explication Signal / `localStorage` | ✅ | § 5 |
+| Entrée dans le rapport d'usage de l'IA | ✅ | § 7 |
+| Checkpoint : connexion réussie, connexion refusée, `/api/users/me` | ✅ | § 4 |
+
+Le brouillon `COMPTE_RENDU_TP1.docx`, à la racine, ne contient que la première version de la mission 0, avec des erreurs corrigées au § 2. Ce document-ci le remplace.
