@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-16T12:04:36.643Z",
+  "navigateur": "Microsoft Edge (headless) + DevTools",
+  "results": [
+    {
+      "name": "Connexion du compte démo",
+      "ok": true
+    },
+    {
+      "name": "Pourcentage affiché pendant l’envoi",
+      "ok": true,
+      "detail": "30 %"
+    },
+    {
+      "name": "Bouton « Envoi en cours… » désactivé pendant l’envoi",
+      "ok": true
+    },
+    {
+      "name": "Envoi terminé : message de succès",
+      "ok": true
+    },
+    {
+      "name": "Un seul POST /api/tracks → 201",
+      "ok": true
+    },
+    {
+      "name": "Confirmation demandée avant la suppression",
+      "ok": true,
+      "detail": "Supprimer définitivement « Démo progression » ?"
+    },
+    {
+      "name": "SnackBar de succès affiché",
+      "ok": true
+    },
+    {
+      "name": "Liste rechargée sans la piste",
+      "ok": true
+    },
+    {
+      "name": "DELETE /api/tracks/:id → 204 avec le JWT",
+      "ok": true
+    },
+    {
+      "name": "Nettoyage : bibliothèque du compte démo revenue à l’état initial",
+      "ok": true,
+      "detail": "song2, song1"
+    }
+  ]
+}

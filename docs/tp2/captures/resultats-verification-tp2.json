@@ -1,0 +1,104 @@
+{
+  "date": "2026-10-16",
+  "navigateur": "Microsoft Edge (headless) + DevTools",
+  "compte": "demo@example.com (+ un second compte créé pour le test de propriété)",
+  "note": "Scénario joué deux fois : les captures viennent du 2e passage ; le test de propriété vient du 1er passage (pas de second compte recréé).",
+  "resultats": [
+    {
+      "name": "Connexion du compte démo puis redirection vers /tracks",
+      "ok": true
+    },
+    {
+      "name": "notes.txt refusé avant l’envoi avec un message clair",
+      "ok": true,
+      "detail": "« notes.txt » n'est pas dans un format accepté. Formats acceptés : MP3, WAV, OGG ou M4A."
+    },
+    {
+      "name": "Bouton « Envoyer » désactivé après un fichier refusé",
+      "ok": true
+    },
+    {
+      "name": "Aucune requête POST envoyée pour le fichier refusé",
+      "ok": true
+    },
+    {
+      "name": "MP3 valide accepté : erreur effacée, bouton actif",
+      "ok": true
+    },
+    {
+      "name": "Upload réussi : message de succès",
+      "ok": true
+    },
+    {
+      "name": "Morceau en cours affiché",
+      "ok": true
+    },
+    {
+      "name": "Lecteur alimenté par une ObjectURL blob:",
+      "ok": true
+    },
+    {
+      "name": "7 pistes : 2 pages affichées",
+      "ok": true
+    },
+    {
+      "name": "« Précédent » désactivé en page 1",
+      "ok": true
+    },
+    {
+      "name": "Page 2 chargée par une nouvelle requête GET",
+      "ok": true
+    },
+    {
+      "name": "« Suivant » désactivé sur la dernière page",
+      "ok": true
+    },
+    {
+      "name": "Piste supprimée « dans un autre onglet » (simulation par fetch)",
+      "ok": true
+    },
+    {
+      "name": "Erreur audio compréhensible sur un 404",
+      "ok": true
+    },
+    {
+      "name": "Erreur de liste affichée avec « Réessayer »",
+      "ok": true,
+      "detail": "Serveur injoignable : vérifiez que le backend est démarré. Réessayer"
+    },
+    {
+      "name": "« Réessayer » recharge la liste",
+      "ok": true
+    },
+    {
+      "name": "Second compte créé",
+      "ok": true,
+      "detail": "verif-proprietaire-1792151910332@example.com"
+    },
+    {
+      "name": "Second compte : lecture de song1 (compte démo) refusée → 404",
+      "ok": true,
+      "detail": "{\"message\":\"Piste inconnue\"}"
+    },
+    {
+      "name": "Second compte : suppression de song1 refusée → 404",
+      "ok": true,
+      "detail": "{\"message\":\"Piste inconnue\"}"
+    },
+    {
+      "name": "Second compte : bibliothèque vide (les pistes du compte démo ne sont pas listées)",
+      "ok": true
+    },
+    {
+      "name": "Compte démo : song1 toujours lisible → 200",
+      "ok": true
+    },
+    {
+      "name": "Nettoyage : bibliothèque du compte démo revenue à l’état initial",
+      "ok": true,
+      "detail": "song2, song1"
+    }
+  ],
+  "total": 22,
+  "reussis": 22
+}

@@ -13,10 +13,13 @@ Sommaire :
    - [A.4 Contrôles du backend et cohérence du `FormData`](#a4-contrôles-du-backend-et-cohérence-du-formdata)
    - [A.5 Constats pour la suite de la mission](#a5-constats-pour-la-suite-de-la-mission)
    - [B. Interface pendant l'envoi](#b-interface-pendant-lenvoi)
+   - [B bis. Validation avant l'envoi](#b-bis-validation-avant-lenvoi)
    - [C. Cards de bibliothèque](#c-cards-de-bibliothèque)
    - [D. Démonstration de la lecture audio authentifiée](#d-démonstration-de-la-lecture-audio-authentifiée)
+   - [D bis. Morceau en cours, erreur audio et révocation finale](#d-bis-morceau-en-cours-erreur-audio-et-révocation-finale)
    - [E. Pourquoi `Blob` et `ObjectURL`](#e-pourquoi-blob-et-objecturl)
    - [F. Questions sur la mémoire, le buffering et le streaming](#f-questions-sur-la-mémoire-le-buffering-et-le-streaming)
+   - [G. Tests automatisés ajoutés pour le TP2](#g-tests-automatisés-ajoutés-pour-le-tp2)
 3. [Captures](#captures)
 
 ---
@@ -25,10 +28,10 @@ Sommaire :
 
 | Livrable | Où | État |
 |---|---|---|
-| Code frontend complété | `frontend-starter/src/app/` | **Partiel** — voir le tableau ci-dessous |
+| Code frontend complété | `frontend-starter/src/app/` | ✅ Fait — voir le tableau ci-dessous |
 | Cards de bibliothèque lisibles | [Section C](#c-cards-de-bibliothèque) | ✅ Fait |
-| Capture Network de la pagination ou de l'upload | [Captures](#captures) : captures de l'upload + trace réseau réelle | ✅ Trace réseau et captures de l'interface ; captures DevTools à ajouter par le binôme |
-| Capture ou démonstration de la lecture audio authentifiée | [Section D](#d-démonstration-de-la-lecture-audio-authentifiée) + [capture](#bibliothèque-en-cards-avec-un-morceau-en-lecture) | ✅ Fait |
+| Capture Network de la pagination ou de l'upload | [Captures](#captures) : pagination, upload multipart, lecture authentifiée (DevTools) + traces réseau | ✅ Fait |
+| Capture ou démonstration de la lecture audio authentifiée | [Section D](#d-démonstration-de-la-lecture-audio-authentifiée) + [capture DevTools](#lecture-authentifiée--get-apitracksidaudio) | ✅ Fait |
 | Explication écrite du choix `Blob` et `ObjectURL` | [Section E](#e-pourquoi-blob-et-objecturl) | ✅ Fait |
 | Réponses aux questions sur la mémoire, le buffering et le streaming | [Section F](#f-questions-sur-la-mémoire-le-buffering-et-le-streaming) | ✅ Fait |
 
@@ -38,12 +41,17 @@ Sommaire :
 |---|---|---|
 | 2 | `TrackService.list(page, limit)` transmet `page` et `limit` | ✅ Déjà présent, vérifié |
 | 2 | Signals `tracks`, `page`, `pages`, `loading` ; `@for` / `@empty` / `@if` ; boutons désactivés aux bornes | ✅ Déjà présents |
-| 2 | Signal `error` et son affichage ; boutons désactivés pendant le chargement ; garde de bornes dans `go()` | ❌ **À faire** (étapes 3-4 de la mission 2) |
+| 2 | Signal d'erreur (`listError`) et son affichage ; boutons désactivés pendant le chargement ; garde de bornes dans `go()` | ✅ Fait le 16/10 ([mission 2](#mission-2--bibliothèque-paginée)) |
 | 3 | Interface pendant l'envoi (chargement, anti double envoi, erreurs, succès, réinitialisation) | ✅ Fait (section B) |
 | 3 | Cards responsives et accessibles | ✅ Fait (section C) |
-| 3 | Validation du format et de la taille avant l'envoi | ❌ **À faire** |
-| 3 | Affichage du morceau en cours, erreur audio compréhensible | ❌ **À faire** |
-| 3 | Révocation de la dernière `ObjectURL` à la destruction du composant | ❌ **À faire** |
+| 3 | Validation du format et de la taille avant l'envoi | ✅ Fait le 16/10 ([section B bis](#b-bis-validation-avant-lenvoi)) |
+| 3 | Affichage du morceau en cours, erreur audio compréhensible | ✅ Fait le 16/10 ([section D bis](#d-bis-morceau-en-cours-erreur-audio-et-révocation-finale)) |
+| 3 | Révocation de la dernière `ObjectURL` à la destruction du composant | ✅ Fait le 16/10 ([section D bis](#d-bis-morceau-en-cours-erreur-audio-et-révocation-finale)) |
+
+**Vérification du 16/10/2026** :
+- `npm run build` : OK ;
+- `npm test` : 34 tests réussis sur 34, dont 10 nouveaux pour le TP2 ([section G](#g-tests-automatisés-ajoutés-pour-le-tp2)) ;
+- scénario réel dans Edge, avec le backend et MongoDB : 22 vérifications sur 22 ([résultats](captures/resultats-verification-tp2.json), [trace réseau](captures/network-trace-verification.txt)).
 
 ---
 
@@ -60,7 +68,32 @@ Sommaire :
 
 Chaque page correspond à une requête distincte, et le serveur ne renvoie que les éléments de cette page.
 
-_Étapes 3 à 6 (Signal d'erreur, template, tests, explication) : à faire. Voir le suivi dans `RAPPORT_IA_MODELE.md`._
+**Implémentation** (`components/tracks-page/tracks-page.ts` et `.html`) :
+
+| Exigence du sujet | Implémentation |
+|---|---|
+| Signals `tracks`, `page`, `pages`, `loading` | Déjà présents |
+| Signal pour l'erreur éventuelle | `listError` : vidé au début de `load()`, rempli par `apiErrorMessage()` en cas d'échec ; affiché avec `role="alert"` et un bouton « Réessayer » |
+| `@for`, `@empty`, `@if` | `@for` sur les cards ; `@empty` n'affiche « Aucune piste… » que si rien ne charge et qu'il n'y a pas d'erreur (avant, ce message apparaissait pendant le chargement) ; `@if` pour « Chargement… » (`role="status"`) et pour l'erreur |
+| « Précédent » / « Suivant » désactivés aux bornes | `[disabled]="page() <= 1 \|\| loading()"` et `[disabled]="page() >= pages() \|\| loading()"` : désactivés aussi pendant un chargement, pour ne pas lancer deux requêtes |
+| Nouvelle requête à chaque changement de page | `go(page)` vérifie les bornes (`page < 1`, `page > pages()`, même page, chargement en cours), met à jour `page`, puis appelle `load()` → `TrackService.list(page(), PAGE_SIZE)` |
+| `limit` explicite | Constante `PAGE_SIZE = 5`, passée à `list()` à chaque appel |
+
+**Trajet d'un clic sur « Suivant »** :
+1. Le bouton appelle `go(page() + 1)`.
+2. `go()` vérifie les bornes, puis met à jour le Signal `page` (qui met à jour « Page 2 / 2 »).
+3. `load()` passe `loading` à `true`, ce qui désactive les boutons et affiche « Chargement… ».
+4. `TrackService.list(2, 5)` lance `HttpClient.get('/api/tracks', { params: { page: 2, limit: 5 } })`.
+5. L'intercepteur ajoute le JWT, puis le proxy transmet la requête à Express.
+6. Le backend fait `skip((page - 1) * limit).limit(limit)` dans MongoDB et renvoie `{ items, page, limit, total, pages }`.
+7. `next` met à jour `tracks` et `pages`, et `loading` repasse à `false`. Le template se met à jour tout seul grâce aux Signals.
+
+**Preuve dans le navigateur** (16/10/2026) : 4 pistes temporaires ont été ajoutées, soit 7 pistes en tout, donc 2 pages. Résultats observés :
+- « Page 1 / 2 », avec « Précédent » désactivé ;
+- un clic sur « Suivant » envoie `GET /api/tracks?page=2&limit=5` → 200, et la page affiche « Page 2 / 2 » avec « Suivant » désactivé ;
+- les pistes temporaires ont été supprimées ensuite.
+
+Voir la [capture DevTools](#pagination--get-apitrackspage2limit5) et la [capture de l'erreur de liste](#erreur-de-chargement-de-la-liste).
 
 ---
 
@@ -187,16 +220,16 @@ Points relevés pendant l'analyse, à traiter dans les étapes 5 à 10 :
 
 | Constat | Fichier | Étape concernée |
 |---|---|---|
-| `accept="audio/*"` est plus large que les formats acceptés par le backend (par exemple FLAC : accepté dans le sélecteur, refusé avec un `400`) | `tracks-page.html` l. 12 | 5 — validation avant l'envoi |
-| Aucune vérification de la taille ni du type avant l'envoi | `tracks-page.ts` `upload()` | 5 |
+| `accept="audio/*"` est plus large que les formats acceptés par le backend (par exemple FLAC : accepté dans le sélecteur, refusé avec un `400`) | `tracks-page.html` l. 12 | 5 — validation avant l'envoi — **corrigé** |
+| Aucune vérification de la taille ni du type avant l'envoi | `tracks-page.ts` `upload()` | 5 — **corrigé** |
 | Pas d'état d'envoi : un double clic envoie le fichier deux fois | `tracks-page.ts`, `.html` l. 13 | 6 — **corrigé** |
 | Les erreurs du serveur ne vont que dans la console, et il n'y a pas de message de succès | `tracks-page.ts` l. 63 | 6 — **corrigé** |
 | Le `<input type="file">` garde le nom du fichier après un envoi réussi (seul `this.file` est vidé) | `tracks-page.ts` l. 59 | 6 — **corrigé** |
 | La taille est affichée en « Ko » alors que `track.size` est en **octets** | `tracks-page.html` l. 28 | 7 — **corrigé** |
 | Le format et la date d'ajout ne sont pas affichés | `tracks-page.html` | 7 — **corrigé** |
-| Le morceau en cours n'est pas affiché | `tracks-page.ts` `play()` | 8 |
-| Une erreur de lecture ne va que dans la console | `tracks-page.ts` l. 75 | 9 |
-| Pas de `ngOnDestroy` : la dernière `ObjectURL` n'est jamais révoquée | `tracks-page.ts` | 10 |
+| Le morceau en cours n'est pas affiché | `tracks-page.ts` `play()` | 8 — **corrigé** |
+| Une erreur de lecture ne va que dans la console | `tracks-page.ts` l. 75 | 9 — **corrigé** |
+| Pas de `ngOnDestroy` : la dernière `ObjectURL` n'est jamais révoquée | `tracks-page.ts` | 10 — **corrigé** |
 
 ### B. Interface pendant l'envoi
 
@@ -209,6 +242,27 @@ Fichiers : `components/tracks-page/tracks-page.ts` (`upload()`, `resetUploadForm
 | Erreurs du serveur | Signal `uploadError`, message de l'API via `apiErrorMessage()` (`role="alert"`) | ✅ « Format audio non accepté » s'affiche |
 | Message de succès | Signal `uploadSuccess` : « « titre » a bien été ajoutée. » | ✅ |
 | Formulaire vidé et page 1 rechargée | Titre vidé, champ fichier vidé (`viewChild`), `page.set(1)` puis `load()` | ✅ La piste apparaît en tête de la page 1 |
+
+> Depuis le TP3 (mission 6), l'état d'envoi est porté par `uploadStatus` (`idle`, `uploading`, `success`, `error`) avec un pourcentage. `uploading` est désormais un `computed`.
+
+### B bis. Validation avant l'envoi
+
+Fichiers : `shared/utils/track-format.ts` (`validateAudioFile()`, `MAX_AUDIO_SIZE`, `AUDIO_ACCEPT`), `tracks-page.ts` (`choose()`, `upload()`), `tracks-page.html`.
+
+| Contrôle du backend (`app.js`) | Même contrôle côté frontend | Message affiché |
+|---|---|---|
+| Type MIME dans `allowed` (6 types) | `validateAudioFile()` vérifie `file.type` contre la **même liste** (celle qui sert déjà à afficher « MP3 », « WAV »… dans les cards) | « « notes.txt » n'est pas dans un format accepté. Formats acceptés : MP3, WAV, OGG ou M4A. » |
+| `MAX_FILE_SIZE` = 25 Mo | `file.size > MAX_AUDIO_SIZE` (25 × 1024 × 1024 octets) | « « live.mp3 » fait 25,0 Mo : la taille maximale est de 25 Mo. » |
+
+- **Quand ?** Dès le choix du fichier (`choose()`), pour un retour immédiat, puis de nouveau dans `upload()`, juste avant l'appel HTTP (garde-fou).
+- **Effet :** un fichier refusé n'est pas gardé (`file` reste à `null`), le bouton « Envoyer » reste désactivé et le message s'affiche sous le champ (`role="alert"`, `aria-invalid`). **Aucune requête** n'est envoyée ([capture](#validation--fichier-refusé-avant-lenvoi)).
+- **Sélecteur de fichier :** `accept` passe de `audio/*` (qui proposait aussi le FLAC, refusé par le backend) à la liste exacte `.mp3,.wav,.ogg,.m4a` + les 6 types MIME. Une aide « MP3, WAV, OGG ou M4A, 25 Mo maximum. » est reliée au champ par `aria-describedby`.
+
+**Pourquoi la validation frontend ne remplace jamais celle du backend ?**
+- Elle sert l'**expérience** : le message arrive tout de suite, en français, sans envoyer 25 Mo pour rien.
+- Elle n'apporte **aucune sécurité** : le code Angular s'exécute chez l'utilisateur, qui peut le modifier, le désactiver ou appeler `POST /api/tracks` directement (`curl`, Postman, console). La section A.4 le montre : `fetch` envoie sans difficulté un `text/plain` ou un fichier de 25 Mo + 1 octet, et c'est le backend qui répond `400`.
+- **Seul le serveur fait foi.** Il protège ses ressources (disque, base) et applique la règle à tous les clients.
+- Les deux contrôles doivent rester alignés. La liste des formats est donc commentée dans `track-format.ts` comme une copie de `allowed` (`backend/src/app.js`).
 
 ### C. Cards de bibliothèque
 
@@ -255,14 +309,42 @@ Logs du backend correspondants :
 
 Le test 3 confirme la section A.3 : sans `HttpClient`, l'intercepteur ne s'exécute pas, donc le JWT n'est pas envoyé.
 
-**Contrôle de propriété** : le backend cherche la piste avec `{ _id, ownerId: req.auth.sub }` (`app.js` l. 381-384). La piste d'un autre utilisateur est traitée comme inexistante, donc **404** (même réponse qu'au test 5). Pour le prouver avec un second compte, il faut créer un autre utilisateur, se connecter avec et demander l'audio d'une piste du compte démo : _test à faire par le binôme_.
+**Contrôle de propriété** : le backend cherche la piste avec `{ _id, ownerId: req.auth.sub }` (`app.js` l. 381-384). La piste d'un autre utilisateur est traitée comme inexistante, donc **404** (même réponse qu'au test 5).
+
+Test réel avec un second compte (16/10/2026) : un compte de test `verif-proprietaire-…@example.com` a été créé avec `POST /api/auth/register`, puis son JWT a été utilisé pour viser `song1`, qui appartient au compte démo.
+
+| # | Requête (JWT du second compte) | Statut | Résultat |
+|---|---|---|---|
+| 7 | `GET /api/tracks/<id de song1>/audio` | **404** | `{"message":"Piste inconnue"}` : la piste ne peut être lue que par son propriétaire |
+| 8 | `DELETE /api/tracks/<id de song1>` | **404** | Suppression refusée, la piste est intacte |
+| 9 | `GET /api/tracks?page=1&limit=5` | **200** | `total: 0` : le second compte ne voit pas les pistes du compte démo |
+| 10 | Même `GET …/audio` avec le JWT du **compte démo** | **200** | `song1` reste lisible par son propriétaire |
+
+Le compte de test reste dans la base, car l'API ne propose pas de route de suppression de compte. Il ne possède aucune piste.
+
+### D bis. Morceau en cours, erreur audio et révocation finale
+
+Fichiers : `tracks-page.ts` (`play()`, `onAudioError()`, `revokeAudioUrl()`, `audioErrorMessage()`), `tracks-page.html` (bloc « Lecteur audio »), `tracks-page.css`.
+
+| Exigence | Implémentation |
+|---|---|
+| Afficher le morceau en cours | Signal `currentTrack`, mis à jour au clic sur « Lire ». Le lecteur affiche « Chargement de « titre »… » pendant le téléchargement du `Blob` (Signal `audioLoading`), puis « En cours de lecture » suivi du titre (`aria-live="polite"`) |
+| Erreur audio compréhensible (HTTP) | Signal `audioError`. Avec `responseType: 'blob'`, le corps JSON de l'erreur arrive sous forme de `Blob` : `apiErrorMessage()` ne peut pas le lire. On se base donc sur le statut : 404 → « « titre » n'existe plus ou ne vous appartient pas. » ; 0 → serveur injoignable ; 401 → session expirée ; autre → « Impossible de charger « titre ». Réessayez dans un instant. » |
+| Erreur audio compréhensible (lecteur) | `(error)="onAudioError()"` sur `<audio>` : le fichier est arrivé, mais le navigateur ne sait pas le décoder → « Le navigateur ne parvient pas à lire « titre » : fichier endommagé ou format non pris en charge. » |
+| Révocation de l'`ObjectURL` finale | `inject(DestroyRef).onDestroy(() => this.revokeAudioUrl())` dans le constructeur : quand on quitte la page, la dernière URL `blob:` est révoquée et le `Blob` peut être libéré. `revokeAudioUrl()` sert aussi avant chaque nouveau morceau et après une erreur de lecture |
+
+Pourquoi `DestroyRef` plutôt que `ngOnDestroy` ? Les deux fonctionnent. `DestroyRef` est la forme recommandée avec `inject()` (Angular 16 et plus) : le nettoyage est déclaré au même endroit que la création.
+
+Preuves :
+- [capture de l'erreur 404](#erreur-de-lecture--piste-supprimée-entre-temps) : une piste supprimée « dans un autre onglet », puis un clic sur « Lire » ;
+- tests unitaires de création, de révocation à chaque morceau et de révocation à la destruction ([section G](#g-tests-automatisés-ajoutés-pour-le-tp2)).
 
 ### E. Pourquoi `Blob` et `ObjectURL`
 
 1. **La route audio est protégée par un JWT** envoyé dans l'en-tête `Authorization`. Or un `<audio src="…">` est chargé directement par le navigateur, qui n'ajoute pas cet en-tête : la démonstration D.3 donne 401.
 2. **On passe donc par `HttpClient`**, pour que l'intercepteur ajoute le token. `responseType: 'blob'` demande à Angular de rendre le corps de la réponse sous forme binaire (`Blob`), au lieu d'essayer de le lire comme du JSON.
 3. **`<audio>` ne sait lire qu'une URL**, pas un objet JavaScript. `URL.createObjectURL(blob)` crée une URL locale (`blob:http://localhost:4200/…`) qui pointe vers ce `Blob` en mémoire. Le lecteur la lit sans nouvelle requête réseau.
-4. **Révocation** : cette URL garde le `Blob` en mémoire tant qu'elle existe. `URL.revokeObjectURL()` la libère. C'est déjà fait pour le morceau précédent dans `play()` ; il reste à le faire à la destruction du composant.
+4. **Révocation** : cette URL garde le `Blob` en mémoire tant qu'elle existe. `URL.revokeObjectURL()` la libère. C'est fait pour le morceau précédent dans `play()`, et pour le dernier morceau à la destruction du composant (`DestroyRef`, section D bis).
 
 **Compromis** : cette solution est simple et sûre (le token ne circule jamais dans une URL), mais le fichier entier doit être téléchargé avant de commencer la lecture. Elle convient à des fichiers de 25 Mo au maximum. Pour de très gros fichiers, on préférerait un cookie `HttpOnly` ou une URL signée temporaire, qui laissent le navigateur lire en streaming.
 
@@ -289,7 +371,7 @@ Avec 100 morceaux, la liste charge 5 métadonnées par page, et un seul fichier 
 - **Authentification** : **ici, ça ne marcherait pas**. Ces requêtes ne passent pas par `HttpClient`, donc sans JWT : 401 pour chacune (démonstration D.3). Il faudrait une autre forme d'authentification (cookie, URL signée).
 
 **5. Pourquoi l'URL créée par `URL.createObjectURL` doit-elle être révoquée ?**
-Une `ObjectURL` garde une référence vers le `Blob`. Tant qu'elle n'est pas révoquée, le navigateur **ne peut pas libérer** ce `Blob`, même si plus rien ne l'utilise dans le code. Cela dure jusqu'à la fermeture ou au rechargement complet de la page. Sans `URL.revokeObjectURL()`, chaque morceau écouté resterait en mémoire : 10 écoutes de fichiers de 5 Mo représenteraient 50 Mo perdus. C'est une **fuite mémoire**. `play()` révoque déjà l'URL précédente. Il manque la révocation de la **dernière** URL quand on quitte la page (`ngOnDestroy`).
+Une `ObjectURL` garde une référence vers le `Blob`. Tant qu'elle n'est pas révoquée, le navigateur **ne peut pas libérer** ce `Blob`, même si plus rien ne l'utilise dans le code. Cela dure jusqu'à la fermeture ou au rechargement complet de la page. Sans `URL.revokeObjectURL()`, chaque morceau écouté resterait en mémoire : 10 écoutes de fichiers de 5 Mo représenteraient 50 Mo perdus. C'est une **fuite mémoire**. `play()` révoque l'URL précédente, et la **dernière** URL est révoquée quand on quitte la page (`DestroyRef.onDestroy`). Un test unitaire le vérifie.
 
 **Récapitulatif : téléchargement complet, buffering et streaming**
 
@@ -298,6 +380,27 @@ Une `ObjectURL` garde une référence vers le `Blob`. Tant qu'elle n'est pas ré
 | Téléchargement complet d'un `Blob` | Client (`HttpClient`) | Tout le fichier est reçu et gardé en mémoire avant la lecture : c'est le choix du projet, pour pouvoir envoyer le JWT |
 | Buffering du navigateur | Client (`<audio>`) | Le lecteur garde en tampon une partie du flux en avance sur la lecture ; avec un `Blob`, tout est déjà en mémoire |
 | Streaming côté serveur | Serveur (`res.sendFile`) | Le fichier est lu sur le disque et envoyé par morceaux, avec prise en charge des requêtes `Range` (206) |
+
+### G. Tests automatisés ajoutés pour le TP2
+
+Fichier : `components/tracks-page/tracks-page.spec.ts`. Ces tests utilisent la même infrastructure que ceux du TP3 (Vitest, `HttpTestingController`) et n'ont besoin ni du backend ni de MongoDB.
+
+| # | Test | Attendu | Observé |
+|---|---|---|---|
+| 1 | `GET /api/tracks` répond 500 | `listError` = message de l'API, `loading` = `false`, alerte affichée | ✅ |
+| 2 | `go(2)` alors qu'il y a 3 pages | `GET /api/tracks` avec `page=2` et `limit=5`, puis affichage de la page 2 | ✅ |
+| 3 | `go(0)` et `go(2)` alors qu'il n'y a qu'une page | Aucune requête, `page` reste à 1 | ✅ |
+| 4 | Choix de `notes.txt` (`text/plain`) puis `upload()` | `fileError` explicite, `file` = `null`, **aucun POST** | ✅ |
+| 5 | Choix d'un MP3 de 25 Mo + 1 octet puis `upload()` | Message « taille maximale 25 Mo », **aucun POST** | ✅ |
+| 6 | Fichier refusé puis MP3 valide | Erreur effacée, fichier retenu | ✅ |
+| 7 | `play()` | « Chargement de « Blues » » ; `GET /api/tracks/t1/audio` en `blob` ; puis « En cours de lecture », `audioUrl` = l'`ObjectURL`, `<audio>` affiché | ✅ |
+| 8 | Deux `play()` successifs | L'`ObjectURL` du premier morceau est révoquée | ✅ |
+| 9 | `play()` → 404 | « « Blues » n'existe plus ou ne vous appartient pas. », `audioUrl` vide, alerte | ✅ |
+| 10 | Destruction du composant après une lecture | `URL.revokeObjectURL` appelé avec la dernière URL | ✅ |
+
+Résultat : `npm test` → **34 tests réussis sur 34** (24 du TP3 + 10 du TP2).
+
+**Contrôle par erreur volontaire** : la ligne `onDestroy(() => this.revokeAudioUrl())` a été retirée, et le test 10 a bien échoué (1 échec, 33 réussis). Le code a ensuite été rétabli.
 
 ---
 
@@ -339,12 +442,52 @@ Ce que la trace prouve :
 - l'upload est en `multipart/form-data` ;
 - le double clic n'a produit **qu'un seul** `POST` → 201.
 
-### Captures DevTools à faire par le binôme
+### Captures DevTools (16/10/2026)
 
-L'agent n'a pas accès au panneau DevTools du navigateur. Ces captures sont donc à faire à la main : DevTools → onglet Network → filtre Fetch/XHR, en masquant le token avant de capturer. Fichiers à déposer dans `docs/tp2/captures/` :
+Les captures ont été faites avec Edge piloté par script, DevTools ouvertes sur l'onglet Network et le filtre Fetch/XHR. Chaque image montre la page en haut et les DevTools en bas. Le JWT est remplacé par `<JWT masqué>` avant la capture, puis le script vérifie qu'aucun JWT ni mot de passe n'est encore visible. Trace complète : [captures/network-trace-verification.txt](captures/network-trace-verification.txt) ; résultats : [captures/resultats-verification-tp2.json](captures/resultats-verification-tp2.json) (22 sur 22).
 
-| Capture | Ce qu'elle doit montrer |
+#### Pagination : `GET /api/tracks?page=2&limit=5`
+
+Clic sur « Suivant » avec 7 pistes. Onglet *Payload* : `page = 2`, `limit = 5`. La page affiche « Page 2 / 2 » avec « Suivant » désactivé.
+
+![Pagination dans Network](captures/network-pagination.png)
+
+#### Upload multipart : `POST /api/tracks` → 201
+
+Onglet *Payload* → *Form data* : `audio` (binaire) et `title` = « Démo multipart ». La page affiche le message de succès et la nouvelle piste en tête de liste.
+
+![Upload multipart dans Network](captures/network-upload-multipart.png)
+
+#### Lecture authentifiée : `GET /api/tracks/:id/audio`
+
+Réponse `200`, `Content-Type: audio/mpeg`, `Content-Length: 3605337`, `Accept-Ranges: bytes`. Dans les *Request headers* : `Authorization: Bearer <JWT masqué>`, ajouté par l'intercepteur. La page affiche « En cours de lecture : song1 ».
+
+![Lecture audio authentifiée dans Network](captures/network-audio-authorization.png)
+
+#### Validation : fichier refusé avant l'envoi
+
+`notes.txt` est refusé dès sa sélection et le bouton « Envoyer » reste désactivé. La liste Network ne contient **aucun** `POST`.
+
+![Fichier refusé avant l'envoi](captures/validation-fichier-refuse.png)
+
+#### Erreur de lecture : piste supprimée entre-temps
+
+La piste « Test pagination 4 » est supprimée par une autre requête (comme depuis un autre onglet), puis on clique sur « Lire » sur sa card restée affichée : `GET …/audio` → 404, et le lecteur affiche le message d'erreur.
+
+![Erreur audio 404](captures/lecture-erreur-404.png)
+
+#### Erreur de chargement de la liste
+
+`GET /api/tracks` est bloqué avec la fonction de blocage de requête des DevTools, puis on clique sur « Actualiser » : le message « Serveur injoignable… » et le bouton « Réessayer » s'affichent. Après le déblocage, « Réessayer » recharge la liste.
+
+![Erreur de chargement de la liste](captures/liste-erreur.png)
+
+### Checkpoint Network du sujet
+
+| Vérification demandée | Preuve |
 |---|---|
-| `network-pagination.png` | `GET /api/tracks?page=1&limit=5`, onglet *Payload* avec `page` et `limit` |
-| `network-upload-multipart.png` | `POST /api/tracks` → 201, onglet *Payload* avec les champs `audio` (binaire) et `title` |
-| `network-audio-authorization.png` | `GET /api/tracks/:id/audio` → 200, *Request Headers* avec `Authorization: Bearer …` (masqué) |
+| Chaque changement de page modifie le paramètre `page` | Capture pagination ; trace : `page=1` puis `page=2` |
+| L'upload est multipart et contient `audio` et `title` | Capture upload (*Form data*) ; trace : `Content-Type: multipart/form-data; boundary=…` |
+| La réponse de lecture est un flux audio | Capture lecture : `Content-Type: audio/mpeg`, `Accept-Ranges: bytes` |
+| Une erreur `400` est affichée pour un fichier invalide | [Capture « Envoi refusé »](#upload--en-cours-succès-erreur) (400 « Format audio non accepté ») ; depuis le 16/10, ces fichiers sont même refusés avant l'envoi |
+| Une piste ne peut être lue que par son propriétaire | Section D, tests 7 à 10, avec un second compte : 404 |

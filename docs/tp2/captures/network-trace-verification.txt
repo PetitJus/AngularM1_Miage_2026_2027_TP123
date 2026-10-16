@@ -1,0 +1,33 @@
+# Trace réseau — vérification TP2 du 16/10/2026 (2e passage, captures). Token masqué, corps non enregistrés.
+# Les requêtes sans clic dans l’interface (fetch) préparent ou nettoient les données de test.
+11:59:32.759  POST   /api/auth/login                                  -> 200   Authorization: (absent)  Content-Type: application/json  <- application/json
+11:59:32.994  GET    /api/tracks?page=1&limit=5                       -> 200   Authorization: Bearer ***  <- application/json
+11:59:38.200  POST   /api/tracks                                      -> 201   Authorization: Bearer ***  Content-Type: multipart/form-data; boundary=…  <- application/json
+11:59:38.280  GET    /api/tracks?page=1&limit=5                       -> 200   Authorization: Bearer ***  <- application/json
+11:59:45.044  GET    /api/tracks/6aac058001a0ef81ffde61b3/audio       -> 200   Authorization: Bearer ***  <- audio/mpeg
+11:59:50.666  GET    /api/tracks?page=1&limit=20                      -> 200   Authorization: Bearer ***  <- application/json
+11:59:50.709  GET    /api/tracks/6aac058001a0ef81ffde61b3/audio       -> 200   Authorization: Bearer ***  <- audio/mpeg
+11:59:50.769  POST   /api/tracks                                      -> 201   Authorization: Bearer ***  Content-Type: multipart/form-data; boundary=…  <- application/json
+11:59:50.834  POST   /api/tracks                                      -> 201   Authorization: Bearer ***  Content-Type: multipart/form-data; boundary=…  <- application/json
+11:59:50.915  POST   /api/tracks                                      -> 201   Authorization: Bearer ***  Content-Type: multipart/form-data; boundary=…  <- application/json
+11:59:50.992  POST   /api/tracks                                      -> 201   Authorization: Bearer ***  Content-Type: multipart/form-data; boundary=…  <- application/json
+11:59:51.092  GET    /api/tracks?page=1&limit=5                       -> 200   Authorization: Bearer ***  <- application/json
+11:59:52.603  GET    /api/tracks?page=2&limit=5                       -> 200   Authorization: Bearer ***  <- application/json
+11:59:57.315  GET    /api/tracks?page=1&limit=5                       -> 200   Authorization: Bearer ***  <- application/json
+11:59:58.827  GET    /api/tracks?page=1&limit=5                       -> 200   Authorization: Bearer ***  <- application/json
+11:59:58.855  DELETE /api/tracks/6ad211b77e242db0f1321f73             -> 204   Authorization: Bearer ***
+11:59:58.887  GET    /api/tracks/6ad211b77e242db0f1321f73/audio       -> 404   Authorization: Bearer ***  <- application/json
+12:00:03.704  GET    /api/tracks?page=1&limit=5                       -> échec (inspector) Authorization: Bearer ***
+12:00:08.487  GET    /api/tracks?page=1&limit=5                       -> 200   Authorization: Bearer ***  <- application/json
+12:00:09.992  DELETE /api/tracks/6ad211aa7e242db0f1321f6f             -> 204   Authorization: Bearer ***
+12:00:10.025  DELETE /api/tracks/6ad211b67e242db0f1321f70             -> 204   Authorization: Bearer ***
+12:00:10.055  DELETE /api/tracks/6ad211b67e242db0f1321f71             -> 204   Authorization: Bearer ***
+12:00:10.089  DELETE /api/tracks/6ad211b67e242db0f1321f72             -> 204   Authorization: Bearer ***
+12:00:10.126  GET    /api/tracks?page=1&limit=20                      -> 200   Authorization: Bearer ***  <- application/json
+# Test de propriété (1er passage) : second compte « verif-proprietaire-…@example.com »
+11:58:30.334  POST   /api/auth/register                               -> 201   Authorization: (absent)  Content-Type: application/json  <- application/json
+11:58:30.529  GET    /api/tracks/6aac058001a0ef81ffde61b3/audio       -> 404   Authorization: Bearer ***  <- application/json
+11:58:30.609  DELETE /api/tracks/6aac058001a0ef81ffde61b3             -> 404   Authorization: Bearer ***  <- application/json
+11:58:30.675  GET    /api/tracks?page=1&limit=5                       -> 200   Authorization: Bearer ***  <- application/json
+11:58:30.728  GET    /api/tracks/6aac058001a0ef81ffde61b3/audio       -> 200   Authorization: Bearer ***  <- audio/mpeg
+# Ordre : création du second compte ; lecture et suppression de song1 (compte démo) avec le JWT du second compte → 404 ; liste du second compte (vide) ; song1 toujours lisible par le compte démo → 200.

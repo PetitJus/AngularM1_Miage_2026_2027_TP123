@@ -1,0 +1,9 @@
+# Trace réseau — captures DevTools TP3 du 16/10/2026 (débit « Slow 4G » pendant l'envoi). Token masqué, corps non enregistrés.
+12:03:45.951  POST   /api/auth/login                                  -> 200   Authorization: (absent)  Content-Type: application/json  <- application/json
+12:03:46.355  GET    /api/tracks?page=1&limit=5                       -> 200   Authorization: Bearer ***  <- application/json
+12:03:48.493  POST   /api/tracks                                      -> 201   Authorization: Bearer ***  Content-Type: multipart/form-data; boundary=…  <- application/json
+12:04:31.851  GET    /api/tracks?page=1&limit=5                       -> 200   Authorization: Bearer ***  <- application/json
+12:04:32.000  GET    /api/tracks?page=1&limit=20                      -> 200   Authorization: Bearer ***  <- application/json
+12:04:32.047  DELETE /api/tracks/6ad212cf7e242db0f1321f76             -> 204   Authorization: Bearer ***
+12:04:32.122  GET    /api/tracks?page=1&limit=5                       -> 200   Authorization: Bearer ***  <- application/json
+12:04:36.608  GET    /api/tracks?page=1&limit=20                      -> 200   Authorization: Bearer ***  <- application/json
