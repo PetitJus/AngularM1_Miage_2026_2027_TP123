@@ -1,12 +1,18 @@
-import { Component, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { Component, computed, DestroyRef, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpEventType } from '@angular/common/http';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Track } from '../../shared/models/track.model';
 import { TrackService } from '../../shared/services/track.service';
 import { apiErrorMessage } from '../../shared/utils/api-error';
-import { formatAudioType, formatFileSize } from '../../shared/utils/track-format';
+import { AUDIO_ACCEPT, formatAudioType, formatFileSize, validateAudioFile } from '../../shared/utils/track-format';
+
+/** Nombre de pistes par page, transmis à l'API à chaque requête. */
+export const PAGE_SIZE = 5;
+
+/** États possibles de l'envoi : aucun envoi, en cours, réussi, en échec. */
+export type UploadStatus = 'idle' | 'uploading' | 'success' | 'error';
 
 @Component({
   imports: [ReactiveFormsModule, DatePipe],
@@ -20,17 +26,29 @@ export class TracksPageComponent {
   // Fonctions de formatage utilisées par les cards du template.
   protected readonly formatAudioType = formatAudioType;
   protected readonly formatFileSize = formatFileSize;
+  protected readonly audioAccept = AUDIO_ACCEPT;
 
   readonly tracks = signal<Track[]>([]);
   readonly page = signal(1);
   readonly pages = signal(1);
   readonly loading = signal(false);
+  /** Erreur de chargement de la liste (vide si aucune). */
+  readonly listError = signal('');
   readonly audioUrl = signal('');
+  /** Piste en cours de lecture (ou de téléchargement), affichée au-dessus du lecteur. */
+  readonly currentTrack = signal<Track | null>(null);
+  readonly audioLoading = signal(false);
+  readonly audioError = signal('');
   readonly title = new FormControl('', { nonNullable: true });
   readonly file = signal<File | null>(null);
+  /** Fichier refusé avant l'envoi (format ou taille), avec le message à afficher. */
+  readonly fileError = signal('');
 
-  // État de l'envoi : chargement, erreur serveur, message de succès.
-  readonly uploading = signal(false);
+  // État de l'envoi : statut, pourcentage, erreur serveur, message de succès.
+  readonly uploadStatus = signal<UploadStatus>('idle');
+  readonly uploading = computed(() => this.uploadStatus() === 'uploading');
+  /** Pourcentage envoyé (0 à 100), calculé à partir des événements de progression HTTP. */
+  readonly uploadProgress = signal(0);
   readonly uploadError = signal('');
   readonly uploadSuccess = signal('');
 
@@ -42,18 +60,28 @@ export class TracksPageComponent {
 
   constructor() {
     this.load();
+    // L'ObjectURL garde le Blob en mémoire : on libère la dernière en quittant la page.
+    inject(DestroyRef).onDestroy(() => this.revokeAudioUrl());
   }
 
   choose(event: Event): void {
-    this.file.set((event.target as HTMLInputElement).files?.[0] ?? null);
+    const selected = (event.target as HTMLInputElement).files?.[0] ?? null;
+    this.uploadStatus.set('idle');
+    this.uploadProgress.set(0);
     this.uploadError.set('');
     this.uploadSuccess.set('');
-    console.debug('[TracksPage] Fichier sélectionné', this.file()?.name);
+
+    // Mêmes contrôles que le backend, avant tout appel HTTP.
+    const invalid = selected ? validateAudioFile(selected) : null;
+    this.fileError.set(invalid ?? '');
+    this.file.set(invalid ? null : selected);
+    console.debug('[TracksPage] Fichier sélectionné', selected?.name, invalid ? '(refusé)' : '');
   }
 
   load(): void {
     this.loading.set(true);
-    this.service.list(this.page()).subscribe({
+    this.listError.set('');
+    this.service.list(this.page(), PAGE_SIZE).subscribe({
       next: (response) => {
         console.debug('[TracksPage] Pistes chargées', response.items.length);
         // Page devenue vide (dernière piste supprimée ici ou ailleurs) : on recule à la dernière page existante.
@@ -66,14 +94,17 @@ export class TracksPageComponent {
         this.pages.set(response.pages);
         this.loading.set(false);
       },
-      error: (error) => {
-        console.error('[TracksPage] Chargement impossible', error);
+      error: (error: unknown) => {
+        console.error('[TracksPage] Chargement impossible', (error as { status?: number }).status);
+        this.listError.set(apiErrorMessage(error, 'Impossible de charger vos pistes.'));
         this.loading.set(false);
       },
     });
   }
 
   go(page: number): void {
+    // Garde-fou en plus des boutons désactivés : pas de page hors bornes ni de requête pendant un chargement.
+    if (page < 1 || page > this.pages() || page === this.page() || this.loading()) return;
     this.page.set(page);
     this.load();
   }
@@ -82,15 +113,32 @@ export class TracksPageComponent {
     const file = this.file();
     // Empêche une double soumission tant qu'un envoi est en cours.
     if (!file || this.uploading()) return;
+    const invalid = validateAudioFile(file);
+    if (invalid) {
+      this.fileError.set(invalid);
+      return;
+    }
 
-    this.uploading.set(true);
+    this.uploadStatus.set('uploading');
+    this.uploadProgress.set(0);
     this.uploadError.set('');
     this.uploadSuccess.set('');
     this.title.disable();
 
     this.service.upload(file, this.title.value || file.name).subscribe({
-      next: (track) => {
+      next: (event) => {
+        if (event.type === HttpEventType.UploadProgress) {
+          // `total` est absent si le navigateur ne connaît pas la taille : on garde alors le dernier pourcentage.
+          if (event.total) this.uploadProgress.set(Math.round((100 * event.loaded) / event.total));
+          return;
+        }
+        // Les autres événements (Sent, ResponseHeader…) sont ignorés : seule la réponse finale termine l'envoi.
+        if (event.type !== HttpEventType.Response || !event.body) return;
+
+        const track = event.body;
         console.debug('[TracksPage] Piste envoyée', track.id);
+        this.uploadProgress.set(100);
+        this.uploadStatus.set('success');
         this.uploadSuccess.set(`« ${track.title} » a bien été ajoutée.`);
         this.resetUploadForm();
         this.page.set(1);
@@ -98,18 +146,18 @@ export class TracksPageComponent {
       },
       error: (error: unknown) => {
         console.error('[TracksPage] Envoi impossible', (error as { status?: number }).status);
+        this.uploadStatus.set('error');
         this.uploadError.set(apiErrorMessage(error, 'Envoi impossible'));
-        this.uploading.set(false);
         this.title.enable();
       },
     });
   }
 
   private resetUploadForm(): void {
-    this.uploading.set(false);
     this.title.enable();
     this.title.setValue('');
     this.file.set(null);
+    this.fileError.set('');
     this.fileInput().nativeElement.value = '';
   }
 
@@ -162,14 +210,52 @@ export class TracksPageComponent {
   }
 
   play(track: Track): void {
+    this.currentTrack.set(track);
+    this.audioLoading.set(true);
+    this.audioError.set('');
     this.service.audio(track.id).subscribe({
       next: (blob) => {
         console.debug('[TracksPage] Audio chargé', track.id);
-        const previousUrl = this.audioUrl();
-        if (previousUrl) URL.revokeObjectURL(previousUrl);
+        this.audioLoading.set(false);
+        this.revokeAudioUrl();
         this.audioUrl.set(URL.createObjectURL(blob));
       },
-      error: (error) => console.error('[TracksPage] Lecture impossible', error),
+      error: (error: unknown) => {
+        const status = (error as { status?: number }).status;
+        console.error('[TracksPage] Lecture impossible', status);
+        this.audioLoading.set(false);
+        this.revokeAudioUrl();
+        this.audioError.set(audioErrorMessage(track, status));
+      },
     });
+  }
+
+  /** Erreur du lecteur lui-même : fichier reçu mais illisible par le navigateur. */
+  onAudioError(): void {
+    const track = this.currentTrack();
+    this.audioError.set(`Le navigateur ne parvient pas à lire « ${track?.title ?? 'ce morceau'} » : fichier endommagé ou format non pris en charge.`);
+  }
+
+  private revokeAudioUrl(): void {
+    const url = this.audioUrl();
+    if (url) URL.revokeObjectURL(url);
+    this.audioUrl.set('');
+  }
+}
+
+/**
+ * Message d'erreur de lecture. Avec `responseType: 'blob'`, le corps d'erreur JSON de l'API
+ * arrive sous forme de Blob : on se base donc sur le statut HTTP.
+ */
+function audioErrorMessage(track: Track, status: number | undefined): string {
+  switch (status) {
+    case 0:
+      return 'Serveur injoignable : impossible de charger le morceau.';
+    case 404:
+      return `« ${track.title} » n'existe plus ou ne vous appartient pas.`;
+    case 401:
+      return 'Session expirée : reconnectez-vous pour écouter ce morceau.';
+    default:
+      return `Impossible de charger « ${track.title} ». Réessayez dans un instant.`;
   }
 }

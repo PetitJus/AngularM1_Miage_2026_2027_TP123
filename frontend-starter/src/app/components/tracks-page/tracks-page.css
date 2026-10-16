@@ -1,5 +1,9 @@
 :host { display: block; }
 
+.upload-progress { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.75rem; }
+.upload-progress progress { flex: 1; height: 0.75rem; accent-color: #1d755e; }
+.upload-progress span { min-width: 3.5rem; font-weight: 600; text-align: right; }
+
 /* Grille responsive : autant de colonnes que la largeur le permet (une seule sur mobile). */
 .track-cards {
   display: grid;
@@ -82,3 +86,12 @@ button:focus-visible {
   outline: 3px solid #e0b84c;
   outline-offset: 2px;
 }
+
+.hint { display: block; margin-top: -0.4rem; color: #4f625c; font-size: 0.8rem; }
+
+/* Bouton « Réessayer » dans un message d'erreur (le style global .link est prévu pour l'en-tête sombre). */
+.error button.link { margin-left: 0.5rem; color: inherit; }
+
+.player { margin-top: 1rem; padding: 0.75rem 1rem; background: #f8fbfa; border: 1px solid #d5e3de; border-radius: 12px; }
+.player__now { margin: 0 0 0.5rem; font-weight: 600; overflow-wrap: anywhere; }
+.player__label { display: block; color: #4f625c; font-size: 0.75rem; font-weight: 400; letter-spacing: 0.05em; text-transform: uppercase; }

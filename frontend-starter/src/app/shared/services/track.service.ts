@@ -14,11 +14,18 @@ export class TrackService {
     });
   }
 
+  /**
+   * Envoie une piste. Avec `reportProgress` et `observe: 'events'`, l'Observable émet
+   * plusieurs événements (progression de l'envoi, puis réponse finale) au lieu du seul `Track`.
+   */
   upload(file: File, title: string) {
     const body = new FormData();
     body.append('audio', file);
     body.append('title', title);
-    return this.http.post<Track>('/api/tracks', body);
+    return this.http.post<Track>('/api/tracks', body, {
+      reportProgress: true,
+      observe: 'events',
+    });
   }
 
   /** Supprime une piste. Le backend vérifie le JWT et que la piste appartient à l'utilisateur (sinon 404). */
